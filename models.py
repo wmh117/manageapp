@@ -1,3 +1,13 @@
 from django.db import models
 
-# Create your models here.
+class Department(models.Model):
+    """Department model部门表"""
+    title = models.CharField(max_length=32,verbose_name='部门标题')
+
+class UserInfo(models.Model):
+    """员工表"""
+    name = models.CharField(max_length=16,verbose_name='员工姓名')
+    password = models.CharField(max_length=64,verbose_name='员工密码')
+    age = models.IntegerField(verbose_name='员工年龄')
+    account = models.DecimalField(max_digits=10,decimal_places=2,default=0,verbose_name='账户余额')
+    create_time = models.DateTimeField(verbose_name='入职时间')
