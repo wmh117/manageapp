@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 
 from manageapp import models
-from manageapp.models import Department
+from manageapp.models import Department,UserInfo
 
 
 # Create your views here.
@@ -27,3 +27,11 @@ def depart_edit(request,nid):
         return render(request,'depart_edit.html',{'row_object':row_object})
     models.Department.objects.filter(id = nid).update(title=request.POST.get('title'))
     return redirect('/depart/list/')
+
+def user_list(request):
+    queryset = UserInfo.objects.all()
+    return render(request,'user_list.html',{'queryset':queryset})
+def user_add(request):
+    if request.method == 'GET':
+        return render(request,'user_add.html')
+    
