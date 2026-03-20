@@ -17,10 +17,12 @@ def depart_add(request):
     title = request.POST.get('title')
     models.Department.objects.create(title=title)
     return redirect('/depart/list/')
+
 def depart_delete(request):
     nid = request.GET.get('nid')
     models.Department.objects.filter(id = nid).delete()
     return redirect('/depart/list/')
+
 def depart_edit(request,nid):
     if request.method == 'GET':
         row_object = models.Department.objects.filter(id = nid).first()
@@ -31,7 +33,60 @@ def depart_edit(request,nid):
 def user_list(request):
     queryset = UserInfo.objects.all()
     return render(request,'user_list.html',{'queryset':queryset})
+
 def user_add(request):
     if request.method == 'GET':
-        return render(request,'user_add.html')
-    
+        context = {
+        'gender_choices':models.UserInfo.gender_choices,
+        "depart_list":models.Department.objects.all()
+        }
+        return render(request,'user_add.html',context)
+    elif request.method == 'POST':
+        user = request.POST.get('user')
+        pwd = request.POST.get('pwd')
+        age = request.POST.get('age')
+        account = request.POST.get('ac')
+        ctime = request.POST.get('ctime')
+        gender = request.POST.get('gd')
+        depart_id = request.POST.get('dp')
+
+        models.UserInfo.objects.create(name=user,password=pwd,age=age,
+                                       account=account,create_time=ctime,
+                                       gender=gender,depart_id=depart_id)
+        return redirect('/user/list/')
+
+from django import forms
+class UserModelForm(forms.ModelForm):
+    name=forms.CharField(min_length=2,max_length=20,)
+    class Meta:
+        model = models.UserInfo
+        fields = ["name","password","age","account","create_time","gender","depart"]
+        # widgets = {
+        #     'name':forms.TextInput(attrs={'class':'form-control'}),
+        #     'password':forms.PasswordInput(attrs={'class':'form-control'}),
+        #     'age':forms.NumberInput(attrs={'class':'form-control'}),
+        #     'account':forms.NumberInput(attrs={'class':'form-control'}),
+        #     'create_time':forms.DateInput(attrs={'class':'form-control'}),
+        #     'gender':forms.Select(attrs={'class':'form-control'}),
+        #     'depart':forms.Select(attrs={'class':'form-control'}),
+        # }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for name,field in self.fields.items():
+            field.widget.attrs={'class':'form-control',"placeholder":field.label}
+def user_model_form_add(request):
+    if request.method == 'GET':
+        form = UserModelForm()
+        return render(request,'user_model_form.html',{'form':form})
+    elif request.method == 'POST':
+        form = UserModelForm(data=request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('/user/list/')
+        return render(request,'user_model_form.html',{'form':form})
+
+def user_edit(request,nid):
+    return render(request,'user_edit.html')
+
+
