@@ -1,3 +1,5 @@
+from tabnanny import verbose
+
 from django.shortcuts import render, redirect
 
 from manageapp import models
@@ -57,7 +59,7 @@ def user_add(request):
 
 from django import forms
 class UserModelForm(forms.ModelForm):
-    name=forms.CharField(min_length=2,max_length=20,)
+    name=forms.CharField(label='员工姓名',min_length=2,max_length=20)
     class Meta:
         model = models.UserInfo
         fields = ["name","password","age","account","create_time","gender","depart"]
@@ -70,6 +72,10 @@ class UserModelForm(forms.ModelForm):
         #     'gender':forms.Select(attrs={'class':'form-control'}),
         #     'depart':forms.Select(attrs={'class':'form-control'}),
         # }
+        widgets={
+        "password":forms.PasswordInput(render_value=False),
+        "create_time":forms.TextInput(attrs={"type":"date"}),
+        }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -87,6 +93,19 @@ def user_model_form_add(request):
         return render(request,'user_model_form.html',{'form':form})
 
 def user_edit(request,nid):
-    return render(request,'user_edit.html')
+    if request.method == 'GET':
+    #从id去数据库获取到编辑的那一行数据（对象）
+        row_object=models.UserInfo.objects.filter(id = nid).first()
+        form=UserModelForm(instance=row_object)
+        return render(request,'user_edit.html',{'form':form})
+    row_object=models.UserInfo.objects.filter(id = nid).first()
+    form = UserModelForm(data=request.POST,instance=row_object)
+    if form.is_valid():
+        form.save()
+        return redirect('/user/list/')
+    return render(request,'user_edit.html',{'form':form})
 
 
+def user_delete(request,nid):
+    models.UserInfo.objects.filter(id = nid).delete()
+    return redirect('/user/list/')

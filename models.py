@@ -9,7 +9,7 @@ class Department(models.Model):
 
 class UserInfo(models.Model):
     """员工表"""
-    name = models.CharField(max_length=16,verbose_name='员工姓名')
+    name = models.CharField(max_length=20,verbose_name='员工姓名')
     password = models.CharField(max_length=64,verbose_name='员工密码')
     age = models.IntegerField(verbose_name='员工年龄')
     account = models.DecimalField(max_digits=10,decimal_places=2,default=0,verbose_name='账户余额')
