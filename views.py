@@ -1,3 +1,4 @@
+from logging import disable
 from tabnanny import verbose
 
 from django.db.models import CharField
@@ -5,7 +6,9 @@ from django.shortcuts import render, redirect
 
 from manageapp import models
 from manageapp.models import Department, UserInfo, PrettyNum
-
+from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
+from django import forms
 
 # Create your views here.
 def depart_list(request):
@@ -108,13 +111,15 @@ def user_delete(request,nid):
     models.UserInfo.objects.filter(id = nid).delete()
     return redirect('/user/list/')
 def prettynum_list(request):
-    queryset = models.PrettyNum.objects.all().order_by("-level")
+    data_dict={}
+    search_data = request.GET.get('q',"")
+    if search_data:
+        data_dict["mobile__contains"]=search_data
+    queryset = models.PrettyNum.objects.filter(**data_dict).order_by("-level")
     #按照等级降序排列
     # queryset = PrettyNum.objects.all()
-    return render(request,'prettynum_list.html',{'queryset':queryset})
-from django.core.validators import RegexValidator
-from django.core.exceptions import ValidationError
-from django import forms
+    return render(request,'prettynum_list.html',{'queryset':queryset,'search_data':search_data})
+
 class PrettyNumForm(forms.ModelForm):
     mobile = forms.CharField(label="手机号",
                 validators=[RegexValidator(r'^1[3-9]\d{9}$','手机格式错误')])
@@ -127,10 +132,12 @@ class PrettyNumForm(forms.ModelForm):
 
         for mobile,field in self.fields.items():
             field.widget.attrs={'class':'form-control',"placeholder":field.label}
+
     def clean_mobile(self):
         txt_mobile = self.cleaned_data["mobile"]
-        if len(txt_mobile)!=11:
-            raise ValidationError("格式错误")
+        exists = models.PrettyNum.objects.filter(mobile=txt_mobile).exists()
+        if exists:
+            raise ValidationError('已存在')
         return txt_mobile
 def prettynum_add(request):
     """添加靓号"""
@@ -143,14 +150,36 @@ def prettynum_add(request):
             form.save()
             return redirect('/prettynum/list/')
         return render(request,'prettynum_add.html',{'form':form})
+
+class PrettyNumEditForm(forms.ModelForm):
+
+    class Meta:
+        model = models.PrettyNum
+        fields = ["mobile","price","level","status"]
+        # fields ="__all__"
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+
+        for name, field in self.fields.items():
+            field.widget.attrs = {'class': 'form-control', "placeholder": field.label}
+
+    def clean_mobile(self):
+        txt_mobile = self.cleaned_data["mobile"]
+
+        exists = models.PrettyNum.objects.exclude(id=self.instance.pk).filter(mobile=txt_mobile).exists()
+        if exists:
+            raise ValidationError('hama已存在')
+        return txt_mobile
+
 def prettynum_edit(request,nid):
+    """编辑靓号"""
     if request.method == 'GET':
     #从id去数据库获取到编辑的那一行数据（对象）
         row_object=models.PrettyNum.objects.filter(id = nid).first()
-        form=PrettyNumForm(instance=row_object)
+        form=PrettyNumEditForm(instance=row_object)
         return render(request,'prettynum_edit.html',{'form':form})
     row_object=models.PrettyNum.objects.filter(id = nid).first()
-    form = PrettyNumForm(data=request.POST,instance=row_object)
+    form = PrettyNumEditForm(data=request.POST,instance=row_object)
     if form.is_valid():
         form.save()
         return redirect('/prettynum/list/')
@@ -158,3 +187,4 @@ def prettynum_edit(request,nid):
 def prettynum_delete(request,nid):
     models.PrettyNum.objects.filter(id=nid).delete()
     return redirect('/prettynum/list/')
+
