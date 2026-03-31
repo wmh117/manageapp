@@ -1,0 +1,31 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-heading">
+            <h3 class="panel-title">
+                <span class="glyphicon glyphicon-edit"></span> {{ title }}
+            </h3>
+        </div>
+        <div class="panel-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                {% for field in form %}
+                    <div class="form-group" style="position: relative; margin-bottom: 25px;">
+                        <label>{{ field.label }}</label>
+                        {{ field }}
+                        <span style="color: red; position: absolute;">{{ field.errors.0 }}</span>
+                    </div>
+                {% endfor %}
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">提 交</button>
+                    <a href="/admin/list/" class="btn btn-default">返 回</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
